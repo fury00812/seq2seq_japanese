@@ -15,7 +15,7 @@ def get_key_from_value(d, value):
     keys = [k for k,v in d.items() if v==value]
     if keys:
         return keys[0]
-    return None
+    return '<UNK>' 
 
 def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path):
 
