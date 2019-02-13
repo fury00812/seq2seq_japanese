@@ -52,7 +52,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
             f.write("steps\ttrain_loss\ttest_loss\n")
 
         for step in range(STEPS+1):
-            current_train_sequences, current_train_encoder_inputs, current_train_decoder_inputs, \
+            current_train_sequences, current_train_tokens, current_train_encoder_inputs, current_train_decoder_inputs, \
                                      current_train_replies, current_train_masks = train_batches.next()
 
             feed_dict = dict()
@@ -87,9 +87,10 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
                 print('Training set:')
                 print('  Loss       : ', current_train_loss)
                 print('  Input            : ', current_train_sequences[rand])
+                print('Input token        : ', current_train_tokens[rand])
                 print('  Generated output : ', train_output)
 
-                current_test_sequences, current_test_encoder_inputs, current_test_decoder_inputs, \
+                current_test_sequences, current_test_tokens, current_test_encoder_inputs, current_test_decoder_inputs, \
                                          current_test_replies, current_test_masks = test_batches.next()
                 test_feed_dict = dict()
                 test_feed_dict = {encoder_inputs[i]: current_test_encoder_inputs[i] for i in range(MAX_INPUT_SEQUENCE_LENGTH)}
@@ -113,6 +114,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
                 print('Test set:')
                 print('  Loss       : ', current_test_loss)
                 print('  Input            : ', current_test_sequences[rand])
+                print('Input token        : ', current_test_tokens[rand])
                 print('  Generated output : ', test_output)
 
                 test_writer.add_summary(test_summary, step)
@@ -123,6 +125,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
                         f.write('Output Instance in {} steps :\n'.format(step))
                         f.write('Loss       : {}\n'.format(str(current_test_loss)))
                         f.write('Input            : {}\n'.format(current_test_sequences[rand]))
+                        f.write('Input token      : {}\n'.format(current_test_tokens[rand]))
                         f.write('Generated output : {}\n'.format("".join(test_output)))
                         f.write('\n')
 

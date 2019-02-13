@@ -27,6 +27,7 @@ class BatchGenerator(object):
 
     def next(self):
         input_sequences = []
+        input_tokens = []
         encoder_inputs = []
         decoder_inputs = []
         decoder_replies = []
@@ -37,10 +38,16 @@ class BatchGenerator(object):
         for i in range(self.BATCH_SIZE):
             # 入力ベクトル作成
             words = getTokenlist(self._tweets[self._GLOBAL_ID])
+            input_token = []
             input_unreverse = []
             for i, word in enumerate(words):
                 if(i<self.MAX_INPUT_SEQUENCE_LENGTH):
-                    input_unreverse.append(self._vocab_dict.get(word, self.UNK_ID)) #トークンから単語IDへ
+                    wordID = self._vocab_dict.get(word, self.UNK_ID)
+                    input_unreverse.append(wordID) #トークンから単語IDへ
+                    if wordID != self.UNK_ID:
+                        input_token.append(word)
+                    else:
+                        input_token.append('<UNK>')
                 else:
                     break
             if self.INPUT_REVERSE:
@@ -62,6 +69,7 @@ class BatchGenerator(object):
 
             # append
             input_sequences.append(self._tweets[self._GLOBAL_ID])
+            input_tokens.append(''.join(input_token))
             encoder_inputs.append(encoder_input)
             decoder_inputs.append(decoder_input)
             decoder_replies.append(decoder_reply)
@@ -69,7 +77,7 @@ class BatchGenerator(object):
             self._GLOBAL_ID = self._GLOBAL_ID+1
         self._GLOBAL_ID = 0 if len(self._tweets)==self.BATCH_SIZE else self._GLOBAL_ID #テスト時GLOBAL_IDリセット
 
-        return input_sequences, np.array(encoder_inputs).T, np.array(decoder_inputs).T, np.array(decoder_replies).T, np.array(decoder_masks).T
+        return input_sequences, input_tokens, np.array(encoder_inputs).T, np.array(decoder_inputs).T, np.array(decoder_replies).T, np.array(decoder_masks).T
 
 '''メモ
 TEST_SIZEとBATCH_SIZEは常に同じにする
