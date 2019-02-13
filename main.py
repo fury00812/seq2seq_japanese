@@ -75,12 +75,16 @@ def makeTestData(raw_tweets, raw_replies):
     train_replies = raw_replies[TEST_SIZE:]
     return test_tweets, test_replies, train_tweets, train_replies
 
-def get_vocab_dict(all_vocab_dict, vocab_num, vocab_type):
+def get_vocab_dict(all_vocab_dict, vocab_num, vocab_type, aizuchi_l):
     vocab_dict = {}
     vocab_dict['<GO>'] = GO_ID 
     vocab_dict['<PAD>'] = PAD_ID 
     vocab_dict['<EOS>'] = EOS_ID 
     print('ALL_VOCABURALY',len(all_vocab_dict))
+
+    # 相槌を辞書に追加する
+    for aizuchi in aizuchi_l:
+        vocab_dict[aizuchi] = len(vocab_dict)
 
     if vocab_type=='Many':
         for k,v in all_vocab_dict.items():
@@ -146,9 +150,12 @@ def main(dir_path, output_dir, param_path):
 
     print('NUMBER OF SENTENCE : ',len(raw_tweets))
 
+    # 相槌リストの作成
+    aizuchi_l = pt.pickle_load(dir_path+'aizuchi_list.pickle')
+
     # 学習,テストデータ・語彙辞書の作成
     test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies)    
-    vocab_dict = get_vocab_dict(pt.pickle_load(dir_path+'vocab_dict.pickle'), global_obj.vocab_num, global_obj.vocab_type)
+    vocab_dict = get_vocab_dict(pt.pickle_load(dir_path+'vocab_dict.pickle'), global_obj.vocab_num, global_obj.vocab_type, aizuchi_l)
     global_obj.update_vocab_num(vocab_dict)
 
     print('VOCABULARY SIZE : ', global_obj.vocab_num)
