@@ -3,7 +3,7 @@
 
 ## main.py
 ```
-python main.py -d '../data/trainData/top1-100k_center/' --o 'top1-100k_center' --p 'params.ini'
+python main.py -d '../data/SampleData/top1-100k_center/' --o 'top1-100k_center' --p 'params.ini'
 ```
 
 -- コマンドライン引数
