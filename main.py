@@ -24,6 +24,7 @@ from module.prepare_trainingData import prepare_trainingData as pt
 global variables 
 '''
 VOCAB_NUM = 50000
+VOCAB_TYPE = 'Many'
 LABEL_NUM = 600 
 BATCH_SIZE = 500
 TEST_SIZE = 500
@@ -74,16 +75,31 @@ def makeTestData(raw_tweets, raw_replies):
     train_replies = raw_replies[TEST_SIZE:]
     return test_tweets, test_replies, train_tweets, train_replies
 
-def get_vocab_dict(all_vocab_dict, vocab_num):
+def get_vocab_dict(all_vocab_dict, vocab_num, vocab_type):
     vocab_dict = {}
     vocab_dict['<GO>'] = GO_ID 
     vocab_dict['<PAD>'] = PAD_ID 
     vocab_dict['<EOS>'] = EOS_ID 
-    for k,v in all_vocab_dict.items():
-        vocab_dict[k] = len(vocab_dict) 
-        if len(vocab_dict) >= vocab_num+4:
-            break
-    return vocab_dict 
+    print('ALL_VOCABURALY',len(all_vocab_dict))
+
+    if vocab_type=='Many':
+        for k,v in all_vocab_dict.items():
+            vocab_dict[k] = len(vocab_dict) 
+            if len(vocab_dict) >= vocab_num+4:
+                break
+    elif vocab_type=='Few': 
+        for k,v in sorted(all_vocab_dict.items(), key=lambda x: x[1]):
+            vocab_dict[k] = len(vocab_dict)
+            if len(vocab_dict) >= vocab_num+4:
+                break
+    elif vocab_type=='Middle' and len(all_vocab_dict) >= vocab_num:
+        offset = len(all_vocab_dict)/2 - vocab_num/2
+        for i, (k,v) in enumerate(all_vocab_dict.items()):
+            if i>=offset:
+                vocab_dict[k] = len(vocab_dict) 
+            if len(vocab_dict) >= vocab_num+4:
+                break
+    return vocab_dict
 
 '''
 グローバル変数の共有
@@ -95,6 +111,7 @@ class GlobalInfo:
         if param_path!=None:
             self.inifile.read(param_path)
         self.vocab_num = int(self.inifile.get('params', 'VOCAB_NUM')) if param_path!=None else VOCAB_NUM
+        self.vocab_type = str(self.inifile.get('params', 'VOCAB_TYPE')) if param_path!=None else VOCAB_TYPE
         self.batch_size = int(self.inifile.get('params','BATCH_SIZE')) if param_path!=None else BATCH_SIZE
         self.test_size = int(self.inifile.get('params','TEST_SIZE')) if param_path!=None else TEST_SIZE
         self.input_length = int(self.inifile.get('params','MAX_INPUT_SEQUENCE_LENGTH')) if param_path!=None else MAX_INPUT_SEQUENCE_LENGTH
@@ -131,7 +148,7 @@ def main(dir_path, output_dir, param_path):
 
     # 学習,テストデータ・語彙辞書の作成
     test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies)    
-    vocab_dict = get_vocab_dict(pt.pickle_load(dir_path+'vocab_dict.pickle'), global_obj.vocab_num)
+    vocab_dict = get_vocab_dict(pt.pickle_load(dir_path+'vocab_dict.pickle'), global_obj.vocab_num, global_obj.vocab_type)
     global_obj.update_vocab_num(vocab_dict)
 
     print('VOCABULARY SIZE : ', global_obj.vocab_num)
