@@ -68,11 +68,11 @@ def shuffleData(raw_tweets, raw_replies):
     raw_replies = list(l)
     return raw_tweets, raw_replies 
 
-def makeTestData(raw_tweets, raw_replies):
-    test_tweets = raw_tweets[:TEST_SIZE]
-    test_replies = raw_replies[:TEST_SIZE]
-    train_tweets = raw_tweets[TEST_SIZE:]
-    train_replies = raw_replies[TEST_SIZE:]
+def makeTestData(raw_tweets, raw_replies, test_size):
+    test_tweets = raw_tweets[:test_size]
+    test_replies = raw_replies[:test_size]
+    train_tweets = raw_tweets[test_size:]
+    train_replies = raw_replies[test_size:]
     return test_tweets, test_replies, train_tweets, train_replies
 
 def get_vocab_and_w2v(all_vocab_dict, all_w2v_array, vocab_num, vocab_type, lstm_size):
@@ -83,14 +83,14 @@ def get_vocab_and_w2v(all_vocab_dict, all_w2v_array, vocab_num, vocab_type, lstm
     row = vocab_num+4
     column = lstm_size
     w2v_array = np.array(np.zeros([row, column]))
-    w2v_array[GO_ID] = np.array(np.random.uniform(-1.0,1.0,column)
-    w2v_array[PAD_ID] = np.array(np.random.uniform(-1.0,1.0,column) 
-    w2v_array[EOS_ID] = np.array(np.random.uniform(-1.0,1.0,column) 
+    w2v_array[GO_ID] = np.array(np.random.uniform(-1.0,1.0,column))
+    w2v_array[PAD_ID] = np.array(np.random.uniform(-1.0,1.0,column))
+    w2v_array[EOS_ID] = np.array(np.random.uniform(-1.0,1.0,column)) 
     print('ALL_VOCABURALY',len(all_vocab_dict))
 
     if vocab_type=='Many':
         for k,v in all_vocab_dict.items():
-            if np.any(all_w2v_array[v]) or k=='<UNK>':
+            if (np.any(all_w2v_array[v]) or k=='<UNK>') and len(k)>1:
                 vocab_dict[k] = len(vocab_dict) 
                 w2v_array[len(vocab_dict)-1] = all_w2v_array[v]
             if len(vocab_dict) >= vocab_num+4:
@@ -157,7 +157,7 @@ def main(dir_path, output_dir, param_path):
     print('NUMBER OF SENTENCE : ',len(raw_tweets))
 
     # 学習,テストデータの作成
-    test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies)    
+    test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies,global_obj.test_size)    
 
     # 語彙辞書・word2vec辞書の作成
     all_vocab_dict = p_handle.pickle_load(dir_path+'vocab_dict.pickle')

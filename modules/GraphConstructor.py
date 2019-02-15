@@ -8,7 +8,7 @@ class GraphConstructor(object):
         self.LSTM_SIZE = global_obj.lstm_size
         self.ATTENTION = global_obj.attention
         self.EMBEDDING_SIZE = global_obj.embedding_size
-
+ 
         self.encoder_inputs = list()
         self.decoder_inputs = list()
         self.replies = list()
@@ -22,7 +22,7 @@ class GraphConstructor(object):
 
     def construct_s2s_graph(self):
         for _ in range(self.MAX_INPUT_SEQUENCE_LENGTH):
-            self.encoder_inputs.append(tf.placeholder(tf.int32, shape=[300,1]))
+            self.encoder_inputs.append(tf.placeholder(tf.int32, shape=(None,)))
         for _ in range(self.MAX_OUTPUT_SEQUENCE_LENGTH):
             self.decoder_inputs.append(tf.placeholder(tf.int32, shape=(None,)))
             self.replies.append(tf.placeholder(tf.int32, shape=(None, )))

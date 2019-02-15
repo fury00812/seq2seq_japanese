@@ -54,7 +54,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
         # セーバー
         if save_path!=None:
-            saver = tf.train.Saver(max_to_keep=100)
+            saver = tf.train.Saver(max_to_keep=None)
 
     # Run session
     with tf.Session(graph=graph) as sess:
@@ -98,7 +98,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
                 train_writer.add_summary(train_summary, step)
                 train_writer.flush()
 
-            if step % (STEPS/100) == 0:
+            if step % (STEPS/10000) == 0:
 
                 # softmax → ID → 単語 
                 rand = random.randint(0,BATCH_SIZE-1)
