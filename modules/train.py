@@ -39,6 +39,8 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
     # Run session
     with tf.Session(graph=graph) as sess:
         sess.run(tf.global_variables_initializer())
+#        with tf.variable_scope('embedding_wrapper'):
+#           v = tf.get_variable('var1', [1]) 
         current_learning_rate = LEARNING_RATE 
         if save_path!=None:
             train_path = './'+save_path+'/tensorboard/train'
@@ -69,6 +71,8 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
             feed_dict.update({learning_rate: current_learning_rate})
 
             _, current_train_loss, current_train_predictions, train_summary = sess.run([optimizer, loss, predictions, merged], feed_dict=feed_dict)
+
+#            _, current_train_loss, current_train_predictions, train_summary,embedding,embedded = sess.run([optimizer, loss, predictions, merged,'seq2seq/embedding_attention_seq2seq/rnn/embedding_wrapper/embedding:0','seq2seq/embedding_attention_seq2seq/rnn/rnn/embedding_wrapper/embedding_lookup_6/Identity:0'], feed_dict=feed_dict)
 
             if save_path!=None:
                 train_writer.add_summary(train_summary, step)
