@@ -83,9 +83,9 @@ def get_vocab_and_w2v(all_vocab_dict, all_w2v_array, vocab_num, vocab_type, lstm
     row = vocab_num+4
     column = lstm_size
     w2v_array = np.array(np.zeros([row, column]))
-    w2v_array[GO_ID] = [-3] * column
-    w2v_array[PAD_ID] = [-2] * column
-    w2v_array[EOS_ID] = [-1] * column
+    w2v_array[GO_ID] = np.array(np.random.uniform(-1.0,1.0,column)
+    w2v_array[PAD_ID] = np.array(np.random.uniform(-1.0,1.0,column) 
+    w2v_array[EOS_ID] = np.array(np.random.uniform(-1.0,1.0,column) 
     print('ALL_VOCABURALY',len(all_vocab_dict))
 
     if vocab_type=='Many':

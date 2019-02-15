@@ -11,6 +11,26 @@ session = tf.Session(config=config)
 モジュール
 module
 '''
+def get_prediction_word(current_predictions, batch_index, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH):
+    output = []
+    for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):   
+        word_id = np.argmax(current_predictions[i][batch_index])
+        output.append(get_key_from_value(vocab_dict, word_id))
+    return output
+
+def get_prediction_word_NO_UNK(current_predictions, batch_index, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH):
+    output = []
+    for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
+        for _ in range(10):
+            word_id = np.argmax(current_predictions[i][batch_index])
+            word = get_key_from_value(vocab_dict, word_id)
+            if word!='<UNK>':
+                output.append(word)
+                break
+            else:
+                current_predictions[i][batch_index][word_id] = -5.0
+    return output
+
 def get_key_from_value(d, value):
     keys = [k for k,v in d.items() if v==value]
     if keys:
@@ -82,10 +102,7 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
                 # softmax → ID → 単語 
                 rand = random.randint(0,BATCH_SIZE-1)
-                train_output = []
-                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
-                    word_id = np.argmax(current_train_predictions[i][rand])
-                    train_output.append(get_key_from_value(vocab_dict, word_id))
+                train_output = get_prediction_word_NO_UNK(current_train_predictions, rand, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH)
 
                 print('Step %d:' % step)
                 print('Training set:')
@@ -110,10 +127,11 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
                 # softmax → ID → 単語
                 rand = random.randint(0,BATCH_SIZE-1)
-                test_output = []
-                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
-                    word_id = np.argmax(current_test_predictions[i][rand])
-                    test_output.append(get_key_from_value(vocab_dict, word_id))
+#                test_output = []
+#                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
+#                    word_id = np.argmax(current_test_predictions[i][rand])
+#                    test_output.append(get_key_from_value(vocab_dict, word_id))
+                test_output = get_prediction_word_NO_UNK(current_test_predictions, rand, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH)
 
                 print('Test set:')
                 print('  Loss       : ', current_test_loss)
