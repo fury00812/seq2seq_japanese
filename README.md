@@ -15,7 +15,9 @@ python main.py -d '../data/trainData/top1-100k_center/' --o 'top1-100k_center' -
 パラメータを記述する設定ファイル
 
 # Branch "word2vec"
-学習済みのword2vecモデルをロードして単語embeddingに用いる
+学習済みのword2vecモデルをロードして単語embeddingに用いる.  
+word2vecモデルは, prepare_trainingData(Branch "regression")で作成する,   
+語彙辞書に対応した[VOCAB_NUM×ベクトルサイズ]のndarrayをpickle化したものを読み込む.   
 
 ## 使用法
 `tensorflow-modules/`下の2つのファイルを以下のように移動させる
