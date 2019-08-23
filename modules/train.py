@@ -11,6 +11,26 @@ session = tf.Session(config=config)
 モジュール
 module
 '''
+def get_prediction_word(current_predictions, batch_index, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH):
+    output = []
+    for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):   
+        word_id = np.argmax(current_predictions[i][batch_index])
+        output.append(get_key_from_value(vocab_dict, word_id))
+    return output
+
+def get_prediction_word_NO_UNK(current_predictions, batch_index, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH):
+    output = []
+    for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
+        for _ in range(10):
+            word_id = np.argmax(current_predictions[i][batch_index])
+            word = get_key_from_value(vocab_dict, word_id)
+            if word!='<UNK>':
+                output.append(word)
+                break
+            else:
+                current_predictions[i][batch_index][word_id] = -5.0
+    return output
+
 def get_key_from_value(d, value):
     keys = [k for k,v in d.items() if v==value]
     if keys:
@@ -34,11 +54,13 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
         # セーバー
         if save_path!=None:
-            saver = tf.train.Saver(max_to_keep=100)
+            saver = tf.train.Saver(max_to_keep=None)
 
     # Run session
     with tf.Session(graph=graph) as sess:
         sess.run(tf.global_variables_initializer())
+#        with tf.variable_scope('embedding_wrapper'):
+#           v = tf.get_variable('var1', [1]) 
         current_learning_rate = LEARNING_RATE 
         if save_path!=None:
             train_path = './'+save_path+'/tensorboard/train'
@@ -70,18 +92,17 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
             _, current_train_loss, current_train_predictions, train_summary = sess.run([optimizer, loss, predictions, merged], feed_dict=feed_dict)
 
+#            _, current_train_loss, current_train_predictions, train_summary,embedding,embedded = sess.run([optimizer, loss, predictions, merged,'seq2seq/embedding_attention_seq2seq/rnn/embedding_wrapper/embedding:0','seq2seq/embedding_attention_seq2seq/rnn/rnn/embedding_wrapper/embedding_lookup_6/Identity:0'], feed_dict=feed_dict)
+
             if save_path!=None:
                 train_writer.add_summary(train_summary, step)
                 train_writer.flush()
 
-            if step % (STEPS/100) == 0:
+            if step % (STEPS/10000) == 0:
 
                 # softmax → ID → 単語 
                 rand = random.randint(0,BATCH_SIZE-1)
-                train_output = []
-                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
-                    word_id = np.argmax(current_train_predictions[i][rand])
-                    train_output.append(get_key_from_value(vocab_dict, word_id))
+                train_output = get_prediction_word_NO_UNK(current_train_predictions, rand, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH)
 
                 print('Step %d:' % step)
                 print('Training set:')
@@ -106,10 +127,11 @@ def train(global_obj, s2s_g, train_batches, test_batches, vocab_dict, save_path)
 
                 # softmax → ID → 単語
                 rand = random.randint(0,BATCH_SIZE-1)
-                test_output = []
-                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
-                    word_id = np.argmax(current_test_predictions[i][rand])
-                    test_output.append(get_key_from_value(vocab_dict, word_id))
+#                test_output = []
+#                for i in range(MAX_OUTPUT_SEQUENCE_LENGTH):
+#                    word_id = np.argmax(current_test_predictions[i][rand])
+#                    test_output.append(get_key_from_value(vocab_dict, word_id))
+                test_output = get_prediction_word_NO_UNK(current_test_predictions, rand, vocab_dict, MAX_OUTPUT_SEQUENCE_LENGTH)
 
                 print('Test set:')
                 print('  Loss       : ', current_test_loss)

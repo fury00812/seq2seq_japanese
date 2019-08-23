@@ -17,7 +17,7 @@ from modules import GraphConstructor as graph_class
 from modules import train
 
 sys.path.append('../')
-from module.prepare_trainingData import prepare_trainingData as pt
+from module.prepare_trainingData import pickle_handler as p_handle
 
 '''
 グローバル変数
@@ -68,29 +68,34 @@ def shuffleData(raw_tweets, raw_replies):
     raw_replies = list(l)
     return raw_tweets, raw_replies 
 
-def makeTestData(raw_tweets, raw_replies):
-    test_tweets = raw_tweets[:TEST_SIZE]
-    test_replies = raw_replies[:TEST_SIZE]
-    train_tweets = raw_tweets[TEST_SIZE:]
-    train_replies = raw_replies[TEST_SIZE:]
+def makeTestData(raw_tweets, raw_replies, test_size):
+    test_tweets = raw_tweets[:test_size]
+    test_replies = raw_replies[:test_size]
+    train_tweets = raw_tweets[test_size:]
+    train_replies = raw_replies[test_size:]
     return test_tweets, test_replies, train_tweets, train_replies
 
-def get_vocab_dict(all_vocab_dict, vocab_num, vocab_type, aizuchi_l):
+def get_vocab_and_w2v(all_vocab_dict, all_w2v_array, vocab_num, vocab_type, lstm_size):
     vocab_dict = {}
     vocab_dict['<GO>'] = GO_ID 
     vocab_dict['<PAD>'] = PAD_ID 
     vocab_dict['<EOS>'] = EOS_ID 
+    row = vocab_num+4
+    column = lstm_size
+    w2v_array = np.array(np.zeros([row, column]))
+    w2v_array[GO_ID] = np.array(np.random.uniform(-1.0,1.0,column))
+    w2v_array[PAD_ID] = np.array(np.random.uniform(-1.0,1.0,column))
+    w2v_array[EOS_ID] = np.array(np.random.uniform(-1.0,1.0,column)) 
     print('ALL_VOCABURALY',len(all_vocab_dict))
-
-    # 相槌を辞書に追加する
-    for aizuchi in aizuchi_l:
-        vocab_dict[aizuchi] = len(vocab_dict)
 
     if vocab_type=='Many':
         for k,v in all_vocab_dict.items():
-            vocab_dict[k] = len(vocab_dict) 
+            if (np.any(all_w2v_array[v]) or k=='<UNK>') and len(k)>1:
+                vocab_dict[k] = len(vocab_dict) 
+                w2v_array[len(vocab_dict)-1] = all_w2v_array[v]
             if len(vocab_dict) >= vocab_num+4:
                 break
+    '''
     elif vocab_type=='Few': 
         for k,v in sorted(all_vocab_dict.items(), key=lambda x: x[1]):
             vocab_dict[k] = len(vocab_dict)
@@ -103,7 +108,8 @@ def get_vocab_dict(all_vocab_dict, vocab_num, vocab_type, aizuchi_l):
                 vocab_dict[k] = len(vocab_dict) 
             if len(vocab_dict) >= vocab_num+4:
                 break
-    return vocab_dict
+    '''
+    return vocab_dict,w2v_array
 
 '''
 グローバル変数の共有
@@ -146,26 +152,28 @@ def main(dir_path, output_dir, param_path):
     global_obj = GlobalInfo(param_path)
 
     # データの読み込み
-    raw_tweets, raw_replies = shuffleData(pt.pickle_load(dir_path+'raw_tweets.pickle'), pt.pickle_load(dir_path+'raw_replies.pickle'))
+    raw_tweets, raw_replies = shuffleData(p_handle.pickle_load(dir_path+'raw_tweets.pickle'), p_handle.pickle_load(dir_path+'raw_replies.pickle'))
 
     print('NUMBER OF SENTENCE : ',len(raw_tweets))
 
-    # 相槌リストの作成
-    aizuchi_l = pt.pickle_load(dir_path+'aizuchi_list.pickle')
+    # 学習,テストデータの作成
+    test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies,global_obj.test_size)    
 
-    # 学習,テストデータ・語彙辞書の作成
-    test_tweets, test_replies, train_tweets, train_replies = makeTestData(raw_tweets, raw_replies)    
-    vocab_dict = get_vocab_dict(pt.pickle_load(dir_path+'vocab_dict.pickle'), global_obj.vocab_num, global_obj.vocab_type, aizuchi_l)
+    # 語彙辞書・word2vec辞書の作成
+    all_vocab_dict = p_handle.pickle_load(dir_path+'vocab_dict.pickle')
+    all_w2v_array = p_handle.pickle_load(dir_path+'w2v_array.pickle')
+    vocab_dict,w2v_array = get_vocab_and_w2v(all_vocab_dict, all_w2v_array, global_obj.vocab_num, global_obj.vocab_type, global_obj.lstm_size)
     global_obj.update_vocab_num(vocab_dict)
-
+    
     print('VOCABULARY SIZE : ', global_obj.vocab_num)
+    print('WORD2VEC SIZE : ', w2v_array.shape)
  
     # バッチオブジェクトの作成
     train_batches = batch_class.BatchGenerator(global_obj, train_tweets, train_replies, vocab_dict)
     test_batches = batch_class.BatchGenerator(global_obj, test_tweets, test_replies, vocab_dict)
 
     # モデルの構築
-    s2s_g = graph_class.GraphConstructor(global_obj)
+    s2s_g = graph_class.GraphConstructor(global_obj, w2v_array)
 
     # モデル学習
     save_path = None # モデルを保存する場合のみ 

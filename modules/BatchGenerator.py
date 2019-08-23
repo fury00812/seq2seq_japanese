@@ -77,6 +77,7 @@ class BatchGenerator(object):
             self._GLOBAL_ID = self._GLOBAL_ID+1
         self._GLOBAL_ID = 0 if len(self._tweets)==self.BATCH_SIZE else self._GLOBAL_ID #テスト時GLOBAL_IDリセット
 
+#        return input_sequences, input_tokens, np.array(encoder_inputs).T, np.array(decoder_inputs).T, np.array(decoder_replies).T, np.array(decoder_masks).T
         return input_sequences, input_tokens, np.array(encoder_inputs).T, np.array(decoder_inputs).T, np.array(decoder_replies).T, np.array(decoder_masks).T
 
 '''メモ
